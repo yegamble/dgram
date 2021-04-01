@@ -1,28 +1,23 @@
 package main
 
 import (
+	"dgram/routes"
 	"github.com/gofiber/fiber/v2"
 	"strconv"
-	"dgram/routes"
 )
 
 type Todo struct {
-	Id int `json:"id"`
-	Name string `json:"name"`
-	Completed bool `json:"completed"`
+	Id        int    `json:"id"`
+	Name      string `json:"name"`
+	Completed bool   `json:"completed"`
 }
 
 var todos = []*Todo{
-	{Id: 1,Name: "Walk the Dog",Completed: false},
-	{Id: 2,Name: "Walk the Cat",Completed: false},
+	{Id: 1, Name: "Walk the Dog", Completed: false},
+	{Id: 2, Name: "Walk the Cat", Completed: false},
 }
 
 func main() {
-	app := fiber.New()
-
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.Send([]byte("Helllo ☕!"))
-	})
 
 	routes.SetRoutes()
 	//api := app.Group("/todos", logger.New())
@@ -42,8 +37,8 @@ func main() {
 
 func UpdateTodo(ctx *fiber.Ctx) error {
 	type request struct {
-		Name *string `json:"name"`
-		Completed *bool `json:"completed"`
+		Name      *string `json:"name"`
+		Completed *bool   `json:"completed"`
 	}
 
 	paramsId := ctx.Params("id")
@@ -65,7 +60,7 @@ func UpdateTodo(ctx *fiber.Ctx) error {
 
 	var todo *Todo
 
-	for _, t := range todos{
+	for _, t := range todos {
 		if t.Id == id {
 			todo = t
 			break
@@ -78,11 +73,11 @@ func UpdateTodo(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if body.Name != nil{
+	if body.Name != nil {
 		todo.Name = *body.Name
 	}
 
-	if body.Completed != nil{
+	if body.Completed != nil {
 		todo.Completed = *body.Completed
 	}
 
@@ -91,7 +86,7 @@ func UpdateTodo(ctx *fiber.Ctx) error {
 	})
 }
 
-func DeleteGetTodo(ctx *fiber.Ctx) error{
+func DeleteGetTodo(ctx *fiber.Ctx) error {
 	paramsId := ctx.Params("id")
 	id, err := strconv.Atoi(paramsId)
 	if err != nil {
@@ -102,7 +97,7 @@ func DeleteGetTodo(ctx *fiber.Ctx) error{
 
 	for i, todo := range todos {
 		if todo.Id == id {
-			todos = append(todos[0:i],todos[i+1:]...)
+			todos = append(todos[0:i], todos[i+1:]...)
 			return ctx.Status(fiber.StatusNoContent).JSON(fiber.Map{
 				"success": true,
 			})
@@ -114,7 +109,7 @@ func DeleteGetTodo(ctx *fiber.Ctx) error{
 	})
 }
 
-func GetTodo(ctx *fiber.Ctx) error{
+func GetTodo(ctx *fiber.Ctx) error {
 	paramsId := ctx.Params("id")
 	id, err := strconv.Atoi(paramsId)
 	if err != nil {
@@ -134,7 +129,7 @@ func GetTodo(ctx *fiber.Ctx) error{
 	})
 }
 
-func CreateTodo(ctx *fiber.Ctx) error{
+func CreateTodo(ctx *fiber.Ctx) error {
 	type request struct {
 		Name string `json:"name"`
 	}
@@ -149,8 +144,8 @@ func CreateTodo(ctx *fiber.Ctx) error{
 	}
 
 	todo := &Todo{
-		Id:	len(todos)+1,
-		Name: body.Name,
+		Id:        len(todos) + 1,
+		Name:      body.Name,
 		Completed: false,
 	}
 
