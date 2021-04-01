@@ -10,7 +10,7 @@ func SetRoutes() {
 	app := fiber.New()
 
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.Send([]byte("Helllo ☕!"))
+		return c.Send([]byte("Welcome ☕!"))
 	})
 
 	user := app.Group("/user", logger.New())
@@ -32,7 +32,15 @@ func SetRoutes() {
 		return users.CreateNewUser(c)
 	})
 
-	user.Post("/upload", func(c *fiber.Ctx) error {
+	user.Put("/:id", func(c *fiber.Ctx) error {
+		return users.UpdateUser(c)
+	})
+
+	user.Delete("/:id", func(c *fiber.Ctx) error {
+		return users.DeleteUser(c)
+	})
+
+	user.Post("/:id/upload-profile-photo", func(c *fiber.Ctx) error {
 		return users.UploadProfilePhoto(c)
 	})
 

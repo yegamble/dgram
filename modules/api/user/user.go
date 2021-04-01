@@ -8,13 +8,10 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	ipfs "github.com/ipfs/go-ipfs-api"
 	"golang.org/x/crypto/argon2"
 	"golang.org/x/tools/go/ssa/interp/testdata/src/errors"
 	"gorm.io/gorm"
-	"log"
 	"math/rand"
-	"os"
 	"time"
 )
 
@@ -55,11 +52,61 @@ func GetUsers(c *fiber.Ctx) error {
 
 func GetUser(c *fiber.Ctx) error {
 	id := c.Params("id")
+
+	user := FindUser(id)
+	if user.FirstName == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"status":  "false",
+			"message": "Profile Not Found",
+		})
+	}
+	return c.Status(fiber.StatusOK).JSON(user)
+}
+
+func SaveUser(user *User) {
+	db := database.DBConn
+
+	db.Save(&user)
+}
+
+func FindUser(id string) User {
 	db := database.DBConn
 
 	var user User
-	db.Find(&user, "id = ?", id)
-	return c.Status(fiber.StatusOK).JSON(user)
+	db.First(&user, "id = ?", id)
+
+	return user
+}
+
+func UpdateUser(c *fiber.Ctx) error {
+
+	db := database.DBConn
+	id := c.Params("id")
+
+	body := FindUser(id)
+	db.Save(&body)
+	return c.Status(fiber.StatusOK).JSON(&body)
+}
+
+func DeleteUser(c *fiber.Ctx) error {
+	db := database.DBConn
+	id := c.Params("id")
+
+	var body User
+	db.First(&body, "id = ?", id)
+	if body.FirstName == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"status":  "false",
+			"message": "Profile Not Found",
+		})
+	}
+
+	db.Delete(&body)
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status":  "true",
+		"message": "Profile Deleted",
+	})
 }
 
 //Function creates a new User
@@ -101,6 +148,7 @@ func updateUser(ctx *fiber.Ctx) error {
 func UploadProfilePhoto(c *fiber.Ctx) error {
 	// Get first file from form field "profile_photo":
 	file, err := c.FormFile("profile_photo")
+	id := c.Params("id")
 
 	// Check for errors:
 	if err == nil {
@@ -108,24 +156,18 @@ func UploadProfilePhoto(c *fiber.Ctx) error {
 		dir := fmt.Sprintf("./uploads/%s", file.Filename)
 		c.SaveFile(file, dir)
 
-		bufferFile, err := os.Open(dir)
+		hash, err := keyUtil.UploadToIPFS(dir)
 		if err != nil {
-			log.Fatal(err)
 			return nil
 		}
 
-		shell := ipfs.NewShell("localhost:5001")
-
-		hash, err := shell.Add(bufferFile)
-		if err != nil {
-			log.Fatal(err)
-			return nil
-		}
-
-		shell.Pin(hash)
+		user := FindUser(id)
+		user.ProfilePhoto = hash
+		SaveUser(&user)
 
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"success": hash,
+			"status":    true,
+			"ipfs_hash": hash,
 		})
 	} else {
 		return err
