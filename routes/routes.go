@@ -14,8 +14,13 @@ func SetRoutes() {
 	})
 
 	user := app.Group("/user", logger.New())
-	user.Get("/", func(c *fiber.Ctx) error {
+
+	user.Post("/", func(c *fiber.Ctx) error {
 		return users.CreateNewUser(c)
+	})
+
+	user.Post("/upload", func(c *fiber.Ctx) error {
+		return users.UploadProfilePhoto(c)
 	})
 
 	//api.Get("/", GetTodos)

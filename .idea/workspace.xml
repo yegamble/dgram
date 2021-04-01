@@ -4,9 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="dc600dc3-9f19-4e4c-b9ab-565921704691" name="Default Changelist" comment="add user generating functions to create unique id, an IOTA wallet, hash a password.">
+    <list default="true" id="dc600dc3-9f19-4e4c-b9ab-565921704691" name="Default Changelist" comment="add pgp key to profile.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modules/api/user/user.go" beforeDir="false" afterPath="$PROJECT_DIR$/modules/api/user/user.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes/routes.go" beforeDir="false" afterPath="$PROJECT_DIR$/routes/routes.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tmp/build-errors.log" beforeDir="false" afterPath="$PROJECT_DIR$/tmp/build-errors.log" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tmp/main" beforeDir="false" afterPath="$PROJECT_DIR$/tmp/main" afterDir="false" />
     </list>
@@ -55,13 +59,29 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
+  <component name="RunManager">
+    <configuration name="go build user.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+      <module name="dgram" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="FILE" />
+      <filePath value="$PROJECT_DIR$/modules/api/user/user.go" />
+      <directory value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Go Build.go build user.go" />
+      </list>
+    </recent_temporary>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="add user generating functions to create unique id, an IOTA wallet, hash a password." />
-    <option name="LAST_COMMIT_MESSAGE" value="add user generating functions to create unique id, an IOTA wallet, hash a password." />
+    <MESSAGE value="add pgp key to profile." />
+    <option name="LAST_COMMIT_MESSAGE" value="add pgp key to profile." />
   </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>
@@ -79,10 +99,10 @@
       <screen x="0" y="23" width="1440" height="877" />
     </state>
     <state x="593" y="365" width="485" height="368" key="Github.ShareDialog/0.23.1440.877@0.23.1440.877" timestamp="1617258318397" />
-    <state x="320" y="188" key="Vcs.Push.Dialog.v2" timestamp="1617274543538">
+    <state x="320" y="188" key="Vcs.Push.Dialog.v2" timestamp="1617275563425">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
-    <state x="320" y="188" key="Vcs.Push.Dialog.v2/0.23.1440.877@0.23.1440.877" timestamp="1617274543538" />
+    <state x="320" y="188" key="Vcs.Push.Dialog.v2/0.23.1440.877@0.23.1440.877" timestamp="1617275563425" />
     <state x="745" y="213" width="670" height="676" key="search.everywhere.popup" timestamp="1617272874360">
       <screen x="0" y="23" width="1440" height="877" />
     </state>

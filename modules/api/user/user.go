@@ -1,16 +1,21 @@
 package user
 
 import (
+	"bytes"
 	"dgram/modules/api/wallet"
 	keyUtil "dgram/modules/util"
 	"encoding/base64"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	ipfs "github.com/ipfs/go-ipfs-api"
 	"golang.org/x/crypto/argon2"
 	"golang.org/x/tools/go/ssa/interp/testdata/src/errors"
+	"io"
+	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -54,6 +59,7 @@ func CreateNewUser(ctx *fiber.Ctx) error {
 	body.Uuid = uuid.New()
 	body.Wallet = wallet.GenerateNewWallet()
 	body.Password, _ = encodeToArgon(body.Password)
+	UploadProfilePhoto(ctx)
 
 	err := ctx.BodyParser(&body)
 	if err != nil || isValidUser(&body) != nil {
@@ -64,6 +70,45 @@ func CreateNewUser(ctx *fiber.Ctx) error {
 	body.PGPKey = keyUtil.Fingerprint(body.PGPKey)
 
 	return ctx.Status(fiber.StatusOK).JSON(body)
+}
+
+func UploadProfilePhoto(c *fiber.Ctx) error {
+	// Get first file from form field "profile_photo":
+	file, err := c.FormFile("profile_photo")
+
+	// Check for errors:
+	if err == nil {
+
+		dir := fmt.Sprintf("./uploads/%s", file.Filename)
+		c.SaveFile(file, dir)
+		var bufferFile io.Reader
+
+		bufferFile, err = os.Open(dir)
+		if err != nil {
+			log.Fatal(err)
+			return err
+		}
+
+		shell := ipfs.NewLocalShell()
+
+		var buf bytes.Buffer
+		if _, err := io.Copy(&buf, bufferFile); err != nil {
+			log.Fatal(err)
+			return err
+		}
+
+		shell.Add(bufferFile)
+		if err != nil {
+			log.Fatal(err)
+			return err
+		}
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"success": true,
+		})
+	} else {
+		return err
+	}
 }
 
 func generateUsername(FirstName string, LastName string) (string, error) {
