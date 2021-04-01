@@ -2,6 +2,7 @@ package user
 
 import (
 	"dgram/modules/api/wallet"
+	keyUtil "dgram/modules/util"
 	"encoding/base64"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
@@ -24,10 +25,12 @@ type User struct {
 	CurrentCity     *string    `json:"current_city"`
 	HomeTown        *string    `json:"hometown"`
 	Bio             string     `json:"bio"`
+	ProfilePhoto    string     `json:"profile_photo"`
 	Password        string     `json:"password"`
 	Wallet          string     `json:"wallet"`
 	Posts           []Post     `json:"posts"`
 	Friends         []User     `json:"friends"`
+	PGPKey          string     `json:"pgp_key"`
 	DateTimeEdited  time.Time  `json:"datetime_modified"`
 	DateTimeCreated time.Time  `json:"datetime_created"`
 }
@@ -58,6 +61,7 @@ func CreateNewUser(ctx *fiber.Ctx) error {
 	}
 
 	body.Username, _ = generateUsername(*body.FirstName, *body.LastName)
+	body.PGPKey = keyUtil.Fingerprint(body.PGPKey)
 
 	return ctx.Status(fiber.StatusOK).JSON(body)
 }
@@ -72,6 +76,7 @@ func generateUsername(FirstName string, LastName string) (string, error) {
 	return fmt.Sprintf(format, FirstName, LastName, rand.Intn(99999+1)), nil
 }
 
+//encodes a string input to argon hash
 func encodeToArgon(input string) (string, error) {
 
 	c := &HashConfig{
@@ -99,6 +104,7 @@ func encodeToArgon(input string) (string, error) {
 
 }
 
+//checks if user is valid before saving to database
 func isValidUser(user *User) error {
 	if user.FirstName == nil || user.LastName == nil {
 		return errors.New("empty name")
