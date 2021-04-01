@@ -1,7 +1,7 @@
 package user
 
 import (
-	"bytes"
+	"dgram/database"
 	"dgram/modules/api/wallet"
 	keyUtil "dgram/modules/util"
 	"encoding/base64"
@@ -11,33 +11,31 @@ import (
 	ipfs "github.com/ipfs/go-ipfs-api"
 	"golang.org/x/crypto/argon2"
 	"golang.org/x/tools/go/ssa/interp/testdata/src/errors"
-	"io"
+	"gorm.io/gorm"
 	"log"
 	"math/rand"
-	"net/http"
 	"os"
 	"time"
 )
 
 type User struct {
-	Uuid            uuid.UUID  `json:"id" gorm:"primary_key"`
-	FirstName       *string    `json:"first_name"`
-	LastName        *string    `json:"last_name"`
-	Email           *string    `json:"email"`
-	Username        string     `json:"username"`
-	DateOfBirth     *time.Time `json:"date_of_birth"`
-	Gender          *string    `json:"gender"`
-	CurrentCity     *string    `json:"current_city"`
-	HomeTown        *string    `json:"hometown"`
-	Bio             string     `json:"bio"`
-	ProfilePhoto    string     `json:"profile_photo"`
-	Password        string     `json:"password"`
-	Wallet          string     `json:"wallet"`
-	Posts           []Post     `json:"posts"`
-	Friends         []User     `json:"friends"`
-	PGPKey          string     `json:"pgp_key"`
-	DateTimeEdited  time.Time  `json:"datetime_modified"`
-	DateTimeCreated time.Time  `json:"datetime_created"`
+	ID           uuid.UUID  `json:"id" gorm:"primary_key"`
+	FirstName    *string    `json:"first_name" gorm:"type:text"`
+	LastName     *string    `json:"last_name" gorm:"type:text"`
+	Email        *string    `json:"email" gorm:"type:text"`
+	Username     string     `json:"username" gorm:"type:text"`
+	DateOfBirth  *time.Time `json:"date_of_birth"`
+	Gender       *string    `json:"gender" gorm:"type:datetime"`
+	CurrentCity  *string    `json:"current_city" gorm:"type:text"`
+	HomeTown     *string    `json:"hometown" gorm:"type:text"`
+	Bio          string     `json:"bio" gorm:"type:text"`
+	ProfilePhoto string     `json:"profile_photo" gorm:"type:text"`
+	Password     *string    `json:"password" gorm:"type:text"`
+	Wallet       string     `json:"wallet" gorm:"type:text"`
+	Posts        []Post     `json:"posts" gorm:"type:text"`
+	Friends      []User     `json:"friends" gorm:"type:text"`
+	PGPKey       string     `json:"pgp_key" gorm:"type:text"`
+	gorm.Model
 }
 
 type HashConfig struct {
@@ -47,18 +45,33 @@ type HashConfig struct {
 	keyLen  uint32
 }
 
-type Users []User
+func GetUsers(c *fiber.Ctx) error {
+	db := database.DBConn
+	var users []User
+	db.Find(&users)
+	return c.Status(fiber.StatusOK).JSON(users)
 
-func IndexPage(w http.ResponseWriter, r *http.Request) {}
+}
+
+func GetUser(c *fiber.Ctx) error {
+	id := c.Params("id")
+	db := database.DBConn
+
+	var user User
+	db.Find(&user, "id = ?", id)
+	return c.Status(fiber.StatusOK).JSON(user)
+}
 
 //Function creates a new User
 func CreateNewUser(ctx *fiber.Ctx) error {
 
+	db := database.DBConn
+
 	//var body User
 	var body User
-	body.Uuid = uuid.New()
+	body.ID = uuid.New()
 	body.Wallet = wallet.GenerateNewWallet()
-	body.Password, _ = encodeToArgon(body.Password)
+	//body.Password, _ = encodeToArgon(*body.Password)
 	UploadProfilePhoto(ctx)
 
 	err := ctx.BodyParser(&body)
@@ -69,7 +82,20 @@ func CreateNewUser(ctx *fiber.Ctx) error {
 	body.Username, _ = generateUsername(*body.FirstName, *body.LastName)
 	body.PGPKey = keyUtil.Fingerprint(body.PGPKey)
 
+	db.Create(&body)
+
 	return ctx.Status(fiber.StatusOK).JSON(body)
+}
+
+func updateUser(ctx *fiber.Ctx) error {
+
+	//var body User
+	//var body *User
+
+	//body.Password, _ = encodeToArgon(body.Password)
+	//UploadProfilePhoto(ctx)
+
+	return nil
 }
 
 func UploadProfilePhoto(c *fiber.Ctx) error {
@@ -81,30 +107,25 @@ func UploadProfilePhoto(c *fiber.Ctx) error {
 
 		dir := fmt.Sprintf("./uploads/%s", file.Filename)
 		c.SaveFile(file, dir)
-		var bufferFile io.Reader
 
-		bufferFile, err = os.Open(dir)
+		bufferFile, err := os.Open(dir)
 		if err != nil {
 			log.Fatal(err)
-			return err
+			return nil
 		}
 
-		shell := ipfs.NewLocalShell()
+		shell := ipfs.NewShell("localhost:5001")
 
-		var buf bytes.Buffer
-		if _, err := io.Copy(&buf, bufferFile); err != nil {
-			log.Fatal(err)
-			return err
-		}
-
-		shell.Add(bufferFile)
+		hash, err := shell.Add(bufferFile)
 		if err != nil {
 			log.Fatal(err)
-			return err
+			return nil
 		}
+
+		shell.Pin(hash)
 
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"success": true,
+			"success": hash,
 		})
 	} else {
 		return err

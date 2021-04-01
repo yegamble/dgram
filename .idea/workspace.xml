@@ -4,7 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="dc600dc3-9f19-4e4c-b9ab-565921704691" name="Default Changelist" comment="add pgp key to profile.">
+    <list default="true" id="dc600dc3-9f19-4e4c-b9ab-565921704691" name="Default Changelist" comment="add ipfs">
+      <change afterPath="$PROJECT_DIR$/database/DBConn.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
@@ -54,6 +55,7 @@
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/database" />
       <recent name="$PROJECT_DIR$/modules/api/wallet" />
       <recent name="$PROJECT_DIR$/modules/api/user" />
       <recent name="$PROJECT_DIR$" />
@@ -81,7 +83,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="add user generating functions to create unique id, an IOTA wallet, hash a password." />
     <MESSAGE value="add pgp key to profile." />
-    <option name="LAST_COMMIT_MESSAGE" value="add pgp key to profile." />
+    <MESSAGE value="add ipfs" />
+    <option name="LAST_COMMIT_MESSAGE" value="add ipfs" />
   </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>
@@ -91,6 +94,10 @@
       <screen x="0" y="23" width="1440" height="877" />
     </state>
     <state x="880" y="302" key="#Go_Modules/0.23.1440.877@0.23.1440.877" timestamp="1617249393926" />
+    <state x="875" y="285" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1617288826773">
+      <screen x="0" y="23" width="1440" height="877" />
+    </state>
+    <state x="875" y="285" key="#com.intellij.fileTypes.FileTypeChooser/0.23.1440.877@0.23.1440.877" timestamp="1617288826773" />
     <state x="466" y="323" key="ANALYSIS_DLG_com.intellij.analysis.BaseAnalysisAction$1" timestamp="1617272054505">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
@@ -99,13 +106,13 @@
       <screen x="0" y="23" width="1440" height="877" />
     </state>
     <state x="593" y="365" width="485" height="368" key="Github.ShareDialog/0.23.1440.877@0.23.1440.877" timestamp="1617258318397" />
-    <state x="320" y="188" key="Vcs.Push.Dialog.v2" timestamp="1617275563425">
+    <state x="320" y="188" key="Vcs.Push.Dialog.v2" timestamp="1617281786390">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
-    <state x="320" y="188" key="Vcs.Push.Dialog.v2/0.23.1440.877@0.23.1440.877" timestamp="1617275563425" />
-    <state x="745" y="213" width="670" height="676" key="search.everywhere.popup" timestamp="1617272874360">
+    <state x="320" y="188" key="Vcs.Push.Dialog.v2/0.23.1440.877@0.23.1440.877" timestamp="1617281786390" />
+    <state x="745" y="213" width="670" height="676" key="search.everywhere.popup" timestamp="1617287947728">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
-    <state x="745" y="213" width="670" height="676" key="search.everywhere.popup/0.23.1440.877@0.23.1440.877" timestamp="1617272874360" />
+    <state x="745" y="213" width="670" height="676" key="search.everywhere.popup/0.23.1440.877@0.23.1440.877" timestamp="1617287947728" />
   </component>
 </project>

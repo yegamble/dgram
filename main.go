@@ -1,8 +1,13 @@
 package main
 
 import (
+	"dgram/database"
+	users "dgram/modules/api/user"
 	"dgram/routes"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 	"strconv"
 )
 
@@ -17,8 +22,19 @@ var todos = []*Todo{
 	{Id: 2, Name: "Walk the Cat", Completed: false},
 }
 
-func main() {
+func initDatabase() {
+	var err error
+	database.DBConn, err = gorm.Open(sqlite.Open("dgram.db"))
+	if err != nil {
+		panic("Failed to Connect to Database")
+	}
+	fmt.Println("Database connection successfully opened")
 
+	database.DBConn.AutoMigrate(&users.User{})
+}
+
+func main() {
+	initDatabase()
 	routes.SetRoutes()
 }
 
