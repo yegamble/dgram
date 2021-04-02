@@ -27,7 +27,8 @@ type User struct {
 	HomeTown     *string    `json:"hometown" gorm:"type:text"`
 	Bio          string     `json:"bio" gorm:"type:text"`
 	ProfilePhoto string     `json:"profile_photo" gorm:"type:text"`
-	Password     *string    `json:"password" gorm:"type:text"`
+	HeaderPhoto  string     `json:"profile_photo" gorm:"type:text"`
+	Password     string     `json:"password" gorm:"type:text"`
 	Wallet       string     `json:"wallet" gorm:"type:text"`
 	Posts        []Post     `json:"posts" gorm:"type:text"`
 	Friends      []User     `json:"friends" gorm:"type:text"`
@@ -47,7 +48,6 @@ func GetUsers(c *fiber.Ctx) error {
 	var users []User
 	db.Find(&users)
 	return c.Status(fiber.StatusOK).JSON(users)
-
 }
 
 func GetUser(c *fiber.Ctx) error {
@@ -83,7 +83,22 @@ func UpdateUser(c *fiber.Ctx) error {
 	db := database.DBConn
 	id := c.Params("id")
 
-	body := FindUser(id)
+	var body User
+	db.First(&body, "id = ?", id)
+
+	err := UploadProfilePhoto(c)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON("Error Uploading Photo")
+	}
+
+	error := c.BodyParser(&body)
+	if error != nil || isValidUser(&body) != nil || body.ID.String() != id {
+		return FailedTransaction(c)
+	}
+
+	body.PGPKey = keyUtil.Fingerprint(body.PGPKey)
+
+	body = FindUser(id)
 	db.Save(&body)
 	return c.Status(fiber.StatusOK).JSON(&body)
 }
@@ -118,12 +133,12 @@ func CreateNewUser(ctx *fiber.Ctx) error {
 	var body User
 	body.ID = uuid.New()
 	body.Wallet = wallet.GenerateNewWallet()
-	//body.Password, _ = encodeToArgon(*body.Password)
+	body.Password = encodeToArgon(body.Password)
 	UploadProfilePhoto(ctx)
 
 	err := ctx.BodyParser(&body)
 	if err != nil || isValidUser(&body) != nil {
-		return faliedTransaction(ctx)
+		return FailedTransaction(ctx)
 	}
 
 	body.Username, _ = generateUsername(*body.FirstName, *body.LastName)
@@ -134,20 +149,13 @@ func CreateNewUser(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(body)
 }
 
-func updateUser(ctx *fiber.Ctx) error {
-
-	//var body User
-	//var body *User
-
-	//body.Password, _ = encodeToArgon(body.Password)
-	//UploadProfilePhoto(ctx)
-
-	return nil
-}
-
 func UploadProfilePhoto(c *fiber.Ctx) error {
 	// Get first file from form field "profile_photo":
 	file, err := c.FormFile("profile_photo")
+	if err != nil || file == nil {
+		return nil
+	}
+
 	id := c.Params("id")
 
 	// Check for errors:
@@ -185,7 +193,7 @@ func generateUsername(FirstName string, LastName string) (string, error) {
 }
 
 //encodes a string input to argon hash
-func encodeToArgon(input string) (string, error) {
+func encodeToArgon(input string) string {
 
 	c := &HashConfig{
 		time:    1,
@@ -197,7 +205,7 @@ func encodeToArgon(input string) (string, error) {
 	// Generate a Salt
 	salt := make([]byte, 16)
 	if _, err := rand.Read(salt); err != nil {
-		return "", err
+		return ""
 	}
 
 	hash := argon2.IDKey([]byte(input), salt, c.time, c.memory, c.threads, c.keyLen)
@@ -208,7 +216,7 @@ func encodeToArgon(input string) (string, error) {
 
 	format := "$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s"
 	full := fmt.Sprintf(format, argon2.Version, c.memory, c.time, c.threads, b64Salt, b64Hash)
-	return full, nil
+	return full
 
 }
 
@@ -220,9 +228,9 @@ func isValidUser(user *User) error {
 	return nil
 }
 
-func faliedTransaction(ctx *fiber.Ctx) error {
+func FailedTransaction(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-		"error": "Server Error Cannot Create User",
+		"error": "Server Error Cannot Make Update",
 	})
 }
 

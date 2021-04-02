@@ -25,7 +25,7 @@ func SetRoutes() {
 
 	user.Post("/", func(c *fiber.Ctx) error {
 		sum := 0
-		for i := 1; i < 500000; i++ {
+		for i := 1; i < 2; i++ {
 			users.CreateNewUser(c)
 			sum += i
 		}

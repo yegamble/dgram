@@ -9,6 +9,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/iotaledger/iota.go v1.0.0-beta.15 // indirect
 	github.com/ipfs/go-ipfs-api v0.2.0
+	github.com/joho/godotenv v1.3.0 // indirect
 	github.com/klauspost/compress v1.11.13 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.6 // indirect
 	github.com/libp2p/go-libp2p-core v0.8.5 // indirect
