@@ -22,9 +22,11 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="dc600dc3-9f19-4e4c-b9ab-565921704691" name="Default Changelist" comment="cleaned up routing.">
+    <list default="true" id="dc600dc3-9f19-4e4c-b9ab-565921704691" name="Default Changelist" comment="remove old code">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/api/user/user.go" beforeDir="false" afterPath="$PROJECT_DIR$/modules/api/user/user.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes/routes.go" beforeDir="false" afterPath="$PROJECT_DIR$/routes/routes.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tmp/main" beforeDir="false" afterPath="$PROJECT_DIR$/tmp/main" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,7 +57,7 @@
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
-    <property name="last_opened_file_path" value="$USER_HOME$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
@@ -101,6 +103,7 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="add user generating functions to create unique id, an IOTA wallet, hash a password." />
@@ -114,7 +117,8 @@
     <MESSAGE value="iota transactions." />
     <MESSAGE value="add .env to gitignore" />
     <MESSAGE value="cleaned up routing." />
-    <option name="LAST_COMMIT_MESSAGE" value="cleaned up routing." />
+    <MESSAGE value="remove old code" />
+    <option name="LAST_COMMIT_MESSAGE" value="remove old code" />
   </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>
@@ -144,10 +148,10 @@
       <screen x="0" y="23" width="1440" height="877" />
     </state>
     <state x="518" y="171" key="RollbackChangesDialog/0.23.1440.877@0.23.1440.877" timestamp="1617327824858" />
-    <state x="320" y="188" key="Vcs.Push.Dialog.v2" timestamp="1617360379950">
+    <state x="320" y="188" key="Vcs.Push.Dialog.v2" timestamp="1617362802587">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
-    <state x="320" y="188" key="Vcs.Push.Dialog.v2/0.23.1440.877@0.23.1440.877" timestamp="1617360379950" />
+    <state x="320" y="188" key="Vcs.Push.Dialog.v2/0.23.1440.877@0.23.1440.877" timestamp="1617362802587" />
     <state x="518" y="382" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1617295603546">
       <screen x="0" y="23" width="1440" height="877" />
     </state>

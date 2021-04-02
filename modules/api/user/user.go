@@ -48,6 +48,10 @@ type HashConfig struct {
 	keyLen  uint32
 }
 
+func init() {
+
+}
+
 func GetUsers(c *fiber.Ctx) error {
 	db := database.DBConn
 	var users []User
