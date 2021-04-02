@@ -20,17 +20,17 @@ type User struct {
 	FirstName    *string    `json:"first_name" gorm:"type:text"`
 	LastName     *string    `json:"last_name" gorm:"type:text"`
 	Email        *string    `json:"email" gorm:"type:text"`
-	Username     string     `json:"username" gorm:"type:text"`
+	Username     string     `json:"username" gorm:"unique"`
 	DateOfBirth  *time.Time `json:"date_of_birth"`
 	Gender       *string    `json:"gender" gorm:"type:datetime"`
 	CurrentCity  *string    `json:"current_city" gorm:"type:text"`
 	HomeTown     *string    `json:"hometown" gorm:"type:text"`
 	Bio          string     `json:"bio" gorm:"type:text"`
 	ProfilePhoto string     `json:"profile_photo" gorm:"type:text"`
-	HeaderPhoto  string     `json:"profile_photo" gorm:"type:text"`
+	HeaderPhoto  string     `json:"header_photo" gorm:"type:text"`
 	Password     string     `json:"password" gorm:"type:text"`
+	Posts        []Post     `json:"posts" gorm:"foreignKey:user_id;references:ID"`
 	Wallet       string     `json:"wallet" gorm:"type:text"`
-	Posts        []Post     `json:"posts" gorm:"type:text"`
 	Friends      []User     `json:"friends" gorm:"type:text"`
 	PGPKey       string     `json:"pgp_key" gorm:"type:text"`
 	gorm.Model
@@ -46,8 +46,10 @@ type HashConfig struct {
 func GetUsers(c *fiber.Ctx) error {
 	db := database.DBConn
 	var users []User
+
+	//db.Preload(clause.Associations).Find(&users) //asociations
 	db.Find(&users)
-	return c.Status(fiber.StatusOK).JSON(users)
+	return c.Status(fiber.StatusOK).JSON(&users)
 }
 
 func GetUser(c *fiber.Ctx) error {

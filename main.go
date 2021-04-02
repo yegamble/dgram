@@ -31,11 +31,13 @@ func initDatabase() {
 	fmt.Println("Database connection successfully opened")
 
 	database.DBConn.AutoMigrate(&users.User{})
+	database.DBConn.AutoMigrate(&users.Post{})
+	database.DBConn.AutoMigrate(&users.Comment{})
 }
 
 func main() {
 	initDatabase()
-	routes.SetRoutes()
+	routes.SetUserRoutes()
 }
 
 func UpdateTodo(ctx *fiber.Ctx) error {

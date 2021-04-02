@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
-func SetRoutes() {
+func SetUserRoutes() {
 	app := fiber.New()
 
 	app.Get("/", func(c *fiber.Ctx) error {
@@ -32,6 +32,10 @@ func SetRoutes() {
 		return users.CreateNewUser(c)
 	})
 
+	user.Post("/:id/post", func(c *fiber.Ctx) error {
+		return users.CreateNewPost(c)
+	})
+
 	user.Put("/:id", func(c *fiber.Ctx) error {
 		return users.UpdateUser(c)
 	})
@@ -43,12 +47,6 @@ func SetRoutes() {
 	user.Post("/:id/upload-profile-photo", func(c *fiber.Ctx) error {
 		return users.UploadProfilePhoto(c)
 	})
-
-	//api.Get("/", GetTodos)
-	//api.Post("/", CreateTodo)
-	//api.Get("/:id", GetTodo)
-	//api.Delete("/:id", DeleteGetTodo)
-	//api.Patch("/:id", UpdateTodo)
 
 	err := app.Listen("localhost:3000")
 	if err != nil {
