@@ -6,6 +6,7 @@ import (
 	"github.com/iotaledger/iota.go/api"
 	"github.com/iotaledger/iota.go/bundle"
 	"github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/converter"
 	"github.com/iotaledger/iota.go/trinary"
 	"github.com/pebbe/zmq4"
 	"log"
@@ -68,6 +69,16 @@ func CheckTransactions() error {
 	}
 }
 
+func RetrieveLastBundle(hash string) (bundle.Bundle, error) {
+
+	bundle, err := iotaAPI.GetBundle(hash)
+	if err != nil {
+		// handle error
+		return nil, err
+	}
+	return bundle, nil
+}
+
 func UpdateProfileAddress(address string, seed string, profile string) (bundle.Bundle, error) {
 
 	const depth = 3
@@ -75,7 +86,8 @@ func UpdateProfileAddress(address string, seed string, profile string) (bundle.B
 
 	trinaryAddress, _ := trinary.NewTrytes(address)
 	trinarySeed, _ := trinary.NewTrytes(seed)
-	trinaryProfile, _ := trinary.NewTrytes(profile)
+	//trinaryProfile, _ := trinary.NewTrytes(profile)
+	trinaryProfile, _ := converter.ASCIIToTrytes(profile)
 	trinaryTag, _ := trinary.NewTrytes("DGRAM")
 
 	transfers := bundle.Transfers{
@@ -115,7 +127,8 @@ func UpdateProfileAddress(address string, seed string, profile string) (bundle.B
 		return nil, err
 	}
 
-	fmt.Println(resultBundle)
+	//RetrieveLastBundle()
+
 	return resultBundle, nil
 }
 
