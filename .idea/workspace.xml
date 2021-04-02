@@ -22,11 +22,10 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="dc600dc3-9f19-4e4c-b9ab-565921704691" name="Default Changelist" comment="add associations clause">
+    <list default="true" id="dc600dc3-9f19-4e4c-b9ab-565921704691" name="Default Changelist" comment="add iota seed and address generator.">
+      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/.env.example" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modules/api/user/user.go" beforeDir="false" afterPath="$PROJECT_DIR$/modules/api/user/user.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modules/api/wallet/iota.go" beforeDir="false" afterPath="$PROJECT_DIR$/modules/api/wallet/iota.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/routes/routes.go" beforeDir="false" afterPath="$PROJECT_DIR$/routes/routes.go" afterDir="false" />
@@ -117,7 +116,8 @@
     <MESSAGE value="update profile photo" />
     <MESSAGE value="fix issues with password" />
     <MESSAGE value="add associations clause" />
-    <option name="LAST_COMMIT_MESSAGE" value="add associations clause" />
+    <MESSAGE value="add iota seed and address generator." />
+    <option name="LAST_COMMIT_MESSAGE" value="add iota seed and address generator." />
   </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>
@@ -147,10 +147,10 @@
       <screen x="0" y="23" width="1440" height="877" />
     </state>
     <state x="518" y="171" key="RollbackChangesDialog/0.23.1440.877@0.23.1440.877" timestamp="1617327824858" />
-    <state x="320" y="188" key="Vcs.Push.Dialog.v2" timestamp="1617334150544">
+    <state x="320" y="188" key="Vcs.Push.Dialog.v2" timestamp="1617341115895">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
-    <state x="320" y="188" key="Vcs.Push.Dialog.v2/0.23.1440.877@0.23.1440.877" timestamp="1617334150543" />
+    <state x="320" y="188" key="Vcs.Push.Dialog.v2/0.23.1440.877@0.23.1440.877" timestamp="1617341115895" />
     <state x="518" y="382" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1617295603546">
       <screen x="0" y="23" width="1440" height="877" />
     </state>

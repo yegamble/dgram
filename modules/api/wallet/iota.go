@@ -4,6 +4,8 @@ import (
 	"crypto/rand"
 	"fmt"
 	"github.com/iotaledger/iota.go/api"
+	"github.com/iotaledger/iota.go/bundle"
+	"github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/trinary"
 	"github.com/pebbe/zmq4"
 	"log"
@@ -66,6 +68,61 @@ func CheckTransactions() error {
 	}
 }
 
+func UpdateProfileAddress(address string, seed string, profile string) (bundle.Bundle, error) {
+
+	const depth = 3
+	const minimumWeightMagnitude = 14
+
+	trinaryAddress, _ := trinary.NewTrytes(address)
+	trinarySeed, _ := trinary.NewTrytes(seed)
+	trinaryProfile, _ := trinary.NewTrytes(profile)
+	trinaryTag, _ := trinary.NewTrytes("DGRAM")
+
+	transfers := bundle.Transfers{
+		{
+			Address: trinaryAddress,
+			Value:   0,
+			Message: trinaryProfile,
+			Tag:     trinaryTag,
+		},
+	}
+
+	// create inputs for the transfer
+	inputs := []api.Input{
+		{
+			// must be 90 trytes long (inlcude the checksum)
+			Address:  trinaryAddress,
+			Security: consts.SecurityLevelHigh,
+			KeyIndex: 0,
+			Balance:  0,
+		},
+	}
+
+	// we don't need to set the security level or timestamp in the options because we supply
+	// the input and remainder addresses.
+	prepTransferOpts := api.PrepareTransfersOptions{Inputs: inputs, RemainderAddress: nil}
+
+	// prepare the transfer by creating a bundle with the given transfers and inputs.
+	// the result are trytes ready for PoW.
+	trytes, err := iotaAPI.PrepareTransfers(trinarySeed, transfers, prepTransferOpts)
+	if err != nil {
+		// handle error
+		return nil, err
+	}
+
+	resultBundle, err := iotaAPI.SendTrytes(trytes, depth, minimumWeightMagnitude)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println(resultBundle)
+	return resultBundle, nil
+}
+
+func must(err error) {
+
+}
+
 func GenerateNewWallet() (string, string, string) {
 	newWallet := new(IotaWallet)
 	newWallet.seed, _ = GenerateRandomSeed()
@@ -89,16 +146,20 @@ func GenerateNewWallet() (string, string, string) {
 // i: inclusionState, Whether to set the persistence field on the transactions.
 // o: Bundles, The bundles gathered of the given addresses.
 // o: error, Returned for invalid parameters and internal errors.
-func GetBundlesFromAddresses(addressesArray []string) {
+func GetBundlesFromAddresses(inputAddress string) (bundle.Bundles, error) {
+
+	address, _ := trinary.NewTrytes(inputAddress)
+
 	addresses := trinary.Hashes{
-		"CUCCO99XUKMXHJQNGPZXGQOTWMACGCQHWPGKTCMC9IPOXTXNFTCDDXTUDXLOMDLSCRXKKLVMJSBSCTE9XRCB9FGUXX",
+		address,
 	}
+
 	bundles, err := iotaAPI.GetBundlesFromAddresses(addresses)
 	if err != nil {
 		// handle error
-		return
+		return nil, err
 	}
-	fmt.Println(bundles)
+	return bundles, nil
 }
 
 // i req: query, The object defining the transactions to search for.
