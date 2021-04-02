@@ -3,11 +3,13 @@ package main
 import (
 	"dgram/database"
 	users "dgram/modules/api/user"
+	"dgram/modules/api/wallet"
 	"dgram/routes"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"log"
 	"strconv"
 )
 
@@ -38,6 +40,11 @@ func initDatabase() {
 func main() {
 	initDatabase()
 	routes.SetUserRoutes()
+
+	err := wallet.CheckTransactions()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func UpdateTodo(ctx *fiber.Ctx) error {
