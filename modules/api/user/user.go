@@ -5,34 +5,39 @@ import (
 	"dgram/modules/api/wallet"
 	keyUtil "dgram/modules/util"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/argon2"
 	"golang.org/x/tools/go/ssa/interp/testdata/src/errors"
 	"gorm.io/gorm"
+	"log"
 	"math/rand"
+	"strings"
 	"time"
 )
 
 type User struct {
-	ID           uuid.UUID  `json:"id" gorm:"primary_key"`
-	FirstName    *string    `json:"first_name" gorm:"type:text"`
-	LastName     *string    `json:"last_name" gorm:"type:text"`
-	Email        *string    `json:"email" gorm:"type:text"`
-	Username     string     `json:"username" gorm:"unique"`
-	DateOfBirth  *time.Time `json:"date_of_birth"`
-	Gender       *string    `json:"gender" gorm:"type:datetime"`
-	CurrentCity  *string    `json:"current_city" gorm:"type:text"`
-	HomeTown     *string    `json:"hometown" gorm:"type:text"`
-	Bio          string     `json:"bio" gorm:"type:text"`
-	ProfilePhoto string     `json:"profile_photo" gorm:"type:text"`
-	HeaderPhoto  string     `json:"header_photo" gorm:"type:text"`
-	Password     string     `json:"password" gorm:"type:text"`
-	Posts        []Post     `json:"posts" gorm:"foreignKey:user_id;references:ID"`
-	Wallet       string     `json:"wallet" gorm:"type:text"`
-	Friends      []User     `json:"friends" gorm:"type:text"`
-	PGPKey       string     `json:"pgp_key" gorm:"type:text"`
+	ID            uuid.UUID  `json:"id" gorm:"primary_key"`
+	FirstName     *string    `json:"first_name" gorm:"type:text"`
+	LastName      *string    `json:"last_name" gorm:"type:text"`
+	Email         *string    `json:"email" gorm:"type:text"`
+	Username      string     `json:"username" gorm:"unique"`
+	DateOfBirth   *time.Time `json:"date_of_birth"`
+	Gender        *string    `json:"gender" gorm:"type:datetime"`
+	CurrentCity   *string    `json:"current_city" gorm:"type:text"`
+	HomeTown      *string    `json:"hometown" gorm:"type:text"`
+	Bio           string     `json:"bio" gorm:"type:text"`
+	ProfilePhoto  string     `json:"profile_photo" gorm:"type:text"`
+	HeaderPhoto   string     `json:"header_photo" gorm:"type:text"`
+	Password      string     `json:"password" gorm:"type:text"`
+	Posts         []Post     `json:"posts" gorm:"foreignKey:user_id;references:ID"`
+	PrivateKey    string     `json:"private_key" gorm:"type:text"`
+	PublicKey     string     `json:"public_key" gorm:"type:text"`
+	ProfileBundle string     `json:"profile_bundle" gorm:"type:text"`
+	Friends       []User     `json:"friends" gorm:"type:text"`
+	PGPKey        string     `json:"pgp_key" gorm:"type:text"`
 	gorm.Model
 }
 
@@ -134,7 +139,7 @@ func CreateNewUser(ctx *fiber.Ctx) error {
 	//var body User
 	var body User
 	body.ID = uuid.New()
-	body.Wallet = wallet.GenerateNewWallet()
+	body.PrivateKey, body.PublicKey, body.ProfileBundle = wallet.GenerateNewWallet()
 	body.Password = encodeToArgon(body.Password)
 	UploadProfilePhoto(ctx)
 
@@ -146,7 +151,16 @@ func CreateNewUser(ctx *fiber.Ctx) error {
 	body.Username, _ = generateUsername(*body.FirstName, *body.LastName)
 	body.PGPKey = keyUtil.Fingerprint(body.PGPKey)
 
-	db.Create(&body)
+	data, _ := json.Marshal(body)
+	_, err = wallet.UpdateProfileAddress(body.PublicKey, body.PrivateKey, string(data))
+	if err != nil {
+		log.Fatal(err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err,
+		})
+	} else {
+		db.Create(&body)
+	}
 
 	return ctx.Status(fiber.StatusOK).JSON(body)
 }
@@ -185,13 +199,26 @@ func UploadProfilePhoto(c *fiber.Ctx) error {
 }
 
 func generateUsername(FirstName string, LastName string) (string, error) {
-
+	db := database.DBConn
 	if FirstName == "" || LastName == "" {
 		return "", errors.New("Name is Invalid")
 	}
 
 	format := "%s.%s.%d"
-	return fmt.Sprintf(format, FirstName, LastName, rand.Intn(99999+1)), nil
+	result := strings.ToLower(fmt.Sprintf(format, FirstName, LastName, rand.Intn(99999+1)))
+
+	var body User
+	queryError := db.First(&body, "username = ?", result).Error
+
+	if queryError == nil {
+		var err error
+		result, err = generateUsername(FirstName, LastName)
+		if err != nil {
+			return "", nil
+		}
+	}
+
+	return result, nil
 }
 
 //encodes a string input to argon hash
