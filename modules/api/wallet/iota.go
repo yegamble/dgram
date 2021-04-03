@@ -1,12 +1,13 @@
 package wallet
 
 import (
+	"bytes"
 	"crypto/rand"
 	"fmt"
 	"github.com/iotaledger/iota.go/api"
 	"github.com/iotaledger/iota.go/bundle"
-	"github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/converter"
+	"github.com/iotaledger/iota.go/transaction"
 	"github.com/iotaledger/iota.go/trinary"
 	"github.com/pebbe/zmq4"
 	"log"
@@ -30,6 +31,7 @@ func init() {
 	iotaAPI, err = api.ComposeAPI(api.HTTPClientSettings{URI: node})
 	if err != nil {
 		panic(err)
+		return
 	}
 }
 
@@ -71,7 +73,12 @@ func CheckTransactions() error {
 
 func RetrieveLastBundle(hash string) (bundle.Bundle, error) {
 
-	bundle, err := iotaAPI.GetBundle(hash)
+	tryteHash, err := trinary.NewTrytes(hash)
+	if err != nil {
+		return nil, err
+	}
+
+	bundle, err := iotaAPI.GetBundle(tryteHash)
 	if err != nil {
 		// handle error
 		return nil, err
@@ -79,14 +86,13 @@ func RetrieveLastBundle(hash string) (bundle.Bundle, error) {
 	return bundle, nil
 }
 
-func UpdateProfileAddress(address string, seed string, profile string) (bundle.Bundle, error) {
+func UpdateProfileAddress(address string, seed string, profile string) (bundle.Bundle, string, error) {
 
 	const depth = 3
 	const minimumWeightMagnitude = 14
 
 	trinaryAddress, _ := trinary.NewTrytes(address)
 	trinarySeed, _ := trinary.NewTrytes(seed)
-	//trinaryProfile, _ := trinary.NewTrytes(profile)
 	trinaryProfile, _ := converter.ASCIIToTrytes(profile)
 	trinaryTag, _ := trinary.NewTrytes("DGRAM")
 
@@ -99,41 +105,69 @@ func UpdateProfileAddress(address string, seed string, profile string) (bundle.B
 		},
 	}
 
-	// create inputs for the transfer
-	inputs := []api.Input{
-		{
-			// must be 90 trytes long (inlcude the checksum)
-			Address:  trinaryAddress,
-			Security: consts.SecurityLevelHigh,
-			KeyIndex: 0,
-			Balance:  0,
-		},
-	}
+	//// create inputs for the transfer
+	//inputs := []api.Input{
+	//	{
+	//		// must be 90 trytes long (inlcude the checksum)
+	//		Address:  trinaryAddress,
+	//		Security: consts.SecurityLevelLow,
+	//		KeyIndex: 0,
+	//		Balance:  0,
+	//	},
+	//}
 
 	// we don't need to set the security level or timestamp in the options because we supply
 	// the input and remainder addresses.
-	prepTransferOpts := api.PrepareTransfersOptions{Inputs: inputs, RemainderAddress: nil}
+	prepTransferOpts := api.PrepareTransfersOptions{}
 
 	// prepare the transfer by creating a bundle with the given transfers and inputs.
 	// the result are trytes ready for PoW.
 	trytes, err := iotaAPI.PrepareTransfers(trinarySeed, transfers, prepTransferOpts)
 	if err != nil {
 		// handle error
-		return nil, err
+		return nil, "", err
 	}
 
 	resultBundle, err := iotaAPI.SendTrytes(trytes, depth, minimumWeightMagnitude)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	//RetrieveLastBundle()
+	err = bundle.ValidBundle(resultBundle)
+	if err != nil {
+		return nil, "", err
+	}
 
-	return resultBundle, nil
+	return resultBundle, bundle.TailTransactionHash(resultBundle), nil
 }
 
-func must(err error) {
+func GetTransactionJSON(transactionHash string) (string, error) {
 
+	bundle, err := iotaAPI.GetBundle(transactionHash)
+	if err != nil {
+		return "", err
+	}
+
+	bundleHashArray := make([]trinary.Hash, len(bundle))
+	var signatureMessage bytes.Buffer
+
+	for i := range bundle {
+		bundleHashArray = append(bundleHashArray, bundle[i].SignatureMessageFragment)
+		signatureMessage.Write([]byte(bundle[i].SignatureMessageFragment))
+	}
+
+	resultTryte := strings.TrimSpace(strings.Join(bundleHashArray[:], ""))
+	resultAscii, err := converter.TrytesToASCII(resultTryte)
+
+	resultNullRemoved := bytes.Trim([]byte(resultAscii), "\x00")
+
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Println(resultAscii)
+
+	return strings.TrimSpace(string(resultNullRemoved)), nil
 }
 
 func GenerateNewWallet() (string, string, string) {
@@ -145,12 +179,6 @@ func GenerateNewWallet() (string, string, string) {
 		log.Fatal(err)
 		return "", "", ""
 	}
-
-	//encodedSeed, err := encodeArgon(newWallet.seed) //save seed instead
-
-	//if err != nil {
-	//	return err.Error()
-	//}
 
 	return newWallet.seed, address, ""
 }
@@ -178,17 +206,20 @@ func GetBundlesFromAddresses(inputAddress string) (bundle.Bundles, error) {
 // i req: query, The object defining the transactions to search for.
 // o: Hashes, The Hashes of the query result.
 // o: error, Returned for invalid query objects and internal errors.
-func ExampleFindTransactions() {
+func GetTransactions(transaction []string) (transaction.Transactions, error) {
+
 	txHashes, err := iotaAPI.FindTransactionObjects(api.FindTransactionsQuery{
 		Approvees: []trinary.Trytes{
 			"DJDMZD9G9VMGR9UKMEYJWYRLUDEVWTPQJXIQAAXFGMXXSCONBGCJKVQQZPXFMVHAAPAGGBMDXESTZ9999",
 		},
 	})
+
 	if err != nil {
 		// handle error
-		return
+		return nil, err
 	}
-	fmt.Println(txHashes)
+
+	return txHashes, nil
 }
 
 func GenerateNewAddress(seed string) (string, error) {

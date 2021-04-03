@@ -16,14 +16,19 @@ type Post struct {
 	Images   []string  `json:"images" gorm:"type:text"`
 	Videos   []string  `json:"videos" gorm:"type:text"`
 	Comments []string  `json:"comments" gorm:"type:text"`
-
+	Votes    []Vote    `json:"votes" gorm:"type:text"`
 	gorm.Model
 }
 
 type Comment struct {
 	ID    uuid.UUID `json:"id" gorm:"primary_key"`
 	Text  string    `json:"text" gorm:"text"`
-	Votes int       `json:"votes"`
+	Votes []Vote    `json:"votes" gorm:"type:text"`
+}
+
+type Vote struct {
+	ID     uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
 }
 
 func CreateNewPost(c *fiber.Ctx) error {

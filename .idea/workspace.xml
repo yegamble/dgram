@@ -22,10 +22,13 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="dc600dc3-9f19-4e4c-b9ab-565921704691" name="Default Changelist" comment="remove old code">
+    <list default="true" id="dc600dc3-9f19-4e4c-b9ab-565921704691" name="Default Changelist" comment="fix db connection issue in user.go">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/api/user/post.go" beforeDir="false" afterPath="$PROJECT_DIR$/modules/api/user/post.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/modules/api/user/user.go" beforeDir="false" afterPath="$PROJECT_DIR$/modules/api/user/user.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routes/routes.go" beforeDir="false" afterPath="$PROJECT_DIR$/routes/routes.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/api/wallet/iota.go" beforeDir="false" afterPath="$PROJECT_DIR$/modules/api/wallet/iota.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tmp/build-errors.log" beforeDir="false" afterPath="$PROJECT_DIR$/tmp/build-errors.log" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tmp/main" beforeDir="false" afterPath="$PROJECT_DIR$/tmp/main" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -75,17 +78,17 @@
     </key>
   </component>
   <component name="RunManager">
-    <configuration name="go build user.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+    <configuration name="go build " type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="dgram" />
       <working_directory value="$PROJECT_DIR$" />
-      <kind value="FILE" />
+      <kind value="PACKAGE" />
       <filePath value="$PROJECT_DIR$/modules/api/user/user.go" />
       <directory value="$PROJECT_DIR$" />
       <method v="2" />
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Go Build.go build user.go" />
+        <item itemvalue="Go Build.go build " />
       </list>
     </recent_temporary>
   </component>
@@ -118,7 +121,8 @@
     <MESSAGE value="add .env to gitignore" />
     <MESSAGE value="cleaned up routing." />
     <MESSAGE value="remove old code" />
-    <option name="LAST_COMMIT_MESSAGE" value="remove old code" />
+    <MESSAGE value="fix db connection issue in user.go" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix db connection issue in user.go" />
   </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>
@@ -128,6 +132,10 @@
       <screen x="0" y="23" width="1440" height="877" />
     </state>
     <state x="880" y="302" key="#Go_Modules/0.23.1440.877@0.23.1440.877" timestamp="1617249393926" />
+    <state x="184" y="123" width="1071" height="756" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1617413475692">
+      <screen x="0" y="23" width="1440" height="877" />
+    </state>
+    <state x="184" y="123" width="1071" height="756" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.23.1440.877@0.23.1440.877" timestamp="1617413475692" />
     <state x="855" y="285" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1617296268003">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
@@ -148,17 +156,17 @@
       <screen x="0" y="23" width="1440" height="877" />
     </state>
     <state x="518" y="171" key="RollbackChangesDialog/0.23.1440.877@0.23.1440.877" timestamp="1617327824858" />
-    <state x="320" y="188" key="Vcs.Push.Dialog.v2" timestamp="1617362802587">
+    <state x="320" y="188" key="Vcs.Push.Dialog.v2" timestamp="1617403810362">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
-    <state x="320" y="188" key="Vcs.Push.Dialog.v2/0.23.1440.877@0.23.1440.877" timestamp="1617362802587" />
+    <state x="320" y="188" key="Vcs.Push.Dialog.v2/0.23.1440.877@0.23.1440.877" timestamp="1617403810362" />
     <state x="518" y="382" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1617295603546">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
     <state x="518" y="382" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.23.1440.877@0.23.1440.877" timestamp="1617295603546" />
-    <state x="745" y="213" width="670" height="676" key="search.everywhere.popup" timestamp="1617333149312">
+    <state x="745" y="213" width="670" height="676" key="search.everywhere.popup" timestamp="1617431064641">
       <screen x="0" y="23" width="1440" height="877" />
     </state>
-    <state x="745" y="213" width="670" height="676" key="search.everywhere.popup/0.23.1440.877@0.23.1440.877" timestamp="1617333149312" />
+    <state x="745" y="213" width="670" height="676" key="search.everywhere.popup/0.23.1440.877@0.23.1440.877" timestamp="1617431064641" />
   </component>
 </project>

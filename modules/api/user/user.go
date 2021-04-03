@@ -19,25 +19,25 @@ import (
 )
 
 type User struct {
-	ID            uuid.UUID  `json:"id" gorm:"primary_key"`
-	FirstName     *string    `json:"first_name" gorm:"type:text"`
-	LastName      *string    `json:"last_name" gorm:"type:text"`
-	Email         *string    `json:"email" gorm:"type:text"`
-	Username      string     `json:"username" gorm:"unique"`
-	DateOfBirth   *time.Time `json:"date_of_birth"`
-	Gender        *string    `json:"gender" gorm:"type:datetime"`
-	CurrentCity   *string    `json:"current_city" gorm:"type:text"`
-	HomeTown      *string    `json:"hometown" gorm:"type:text"`
-	Bio           string     `json:"bio" gorm:"type:text"`
-	ProfilePhoto  string     `json:"profile_photo" gorm:"type:text"`
-	HeaderPhoto   string     `json:"header_photo" gorm:"type:text"`
-	Password      string     `json:"password" gorm:"type:text"`
-	Posts         []Post     `json:"posts" gorm:"foreignKey:user_id;references:ID"`
-	PrivateKey    string     `json:"private_key" gorm:"type:text"`
-	PublicKey     string     `json:"public_key" gorm:"type:text"`
-	ProfileBundle string     `json:"profile_bundle" gorm:"type:text"`
-	Friends       []User     `json:"friends" gorm:"type:text"`
-	PGPKey        string     `json:"pgp_key" gorm:"type:text"`
+	ID                  uuid.UUID  `json:"id" gorm:"primary_key"`
+	FirstName           *string    `json:"first_name" gorm:"type:text"`
+	LastName            *string    `json:"last_name" gorm:"type:text"`
+	Email               *string    `json:"email" gorm:"type:text"`
+	Username            string     `json:"username" gorm:"unique"`
+	DateOfBirth         *time.Time `json:"date_of_birth"`
+	Gender              *string    `json:"gender" gorm:"type:datetime"`
+	CurrentCity         *string    `json:"current_city" gorm:"type:text"`
+	HomeTown            *string    `json:"hometown" gorm:"type:text"`
+	Bio                 *string    `json:"bio" gorm:"type:text"`
+	ProfilePhoto        string     `json:"profile_photo" gorm:"type:text"`
+	HeaderPhoto         string     `json:"header_photo" gorm:"type:text"`
+	Password            string     `json:"password" gorm:"type:text"`
+	Posts               []Post     `json:"posts" gorm:"foreignKey:user_id;references:ID"`
+	PrivateKey          string     `json:"private_key" gorm:"type:text"`
+	PublicKey           string     `json:"public_key" gorm:"type:text"`
+	LastTailTransaction string     `json:"last_tail_transaction" gorm:"type:text"`
+	Friends             []User     `json:"friends" gorm:"type:text"`
+	PGPKey              string     `json:"pgp_key" gorm:"type:text"`
 	gorm.Model
 }
 
@@ -110,8 +110,62 @@ func UpdateUser(c *fiber.Ctx) error {
 	body.PGPKey = keyUtil.Fingerprint(body.PGPKey)
 
 	body = FindUser(id)
-	db.Save(&body)
+
+	err = userFormMapper(&body, c)
+	if err != nil {
+		log.Fatal(err)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err,
+		})
+	}
+
+	data, err := json.Marshal(body)
+	_, body.LastTailTransaction, err = wallet.UpdateProfileAddress(body.PublicKey, body.PrivateKey, string(data))
+	if err != nil || isValidUser(&body) != nil {
+		log.Fatal(err)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err,
+		})
+	} else {
+		db.Save(&body)
+	}
+
+	transaction, err := wallet.GetTransactionJSON(body.LastTailTransaction)
+	if err != nil {
+		log.Fatal(err)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err,
+		})
+	} else if transaction == "" {
+		log.Fatal(err)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Decentralised Transaction not Found",
+		})
+	}
+
 	return c.Status(fiber.StatusOK).JSON(&body)
+}
+
+func userFormMapper(user *User, c *fiber.Ctx) error {
+	*user.FirstName = c.FormValue("first_name")
+	*user.LastName = c.FormValue("last_name", *user.LastName)
+	*user.Email = c.FormValue("email", *user.Email)
+	*user.Gender = c.FormValue("gender", *user.Gender)
+	*user.CurrentCity = c.FormValue("current_city", *user.CurrentCity)
+	*user.HomeTown = c.FormValue("hometown", *user.HomeTown)
+	*user.Bio = c.FormValue("bio", *user.Bio)
+
+	//timeLayout := time.RFC3339
+	//t2, err := time.Parse(timeLayout, c.FormValue("date_of_birth"))
+	//
+	//if err != nil {
+	//	fmt.Println("RFC format doesn't work") // You shouldn't see this at all
+	//	return err
+	//} else {
+	//	fmt.Println(t2)
+	//}
+
+	return nil
 }
 
 func DeleteUser(c *fiber.Ctx) error {
@@ -143,7 +197,7 @@ func CreateNewUser(ctx *fiber.Ctx) error {
 	//var body User
 	var body User
 	body.ID = uuid.New()
-	body.PrivateKey, body.PublicKey, body.ProfileBundle = wallet.GenerateNewWallet()
+	body.PrivateKey, body.PublicKey, body.LastTailTransaction = wallet.GenerateNewWallet()
 	body.Password = encodeToArgon(body.Password)
 	UploadProfilePhoto(ctx)
 
@@ -155,8 +209,8 @@ func CreateNewUser(ctx *fiber.Ctx) error {
 	body.Username, _ = generateUsername(*body.FirstName, *body.LastName)
 	body.PGPKey = keyUtil.Fingerprint(body.PGPKey)
 
-	data, _ := json.Marshal(body)
-	_, err = wallet.UpdateProfileAddress(body.PublicKey, body.PrivateKey, string(data))
+	data, err := json.Marshal(body)
+	_, body.LastTailTransaction, err = wallet.UpdateProfileAddress(body.PublicKey, body.PrivateKey, string(data))
 	if err != nil {
 		log.Fatal(err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -166,7 +220,23 @@ func CreateNewUser(ctx *fiber.Ctx) error {
 		db.Create(&body)
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(body)
+	transaction, err := wallet.GetTransactionJSON(body.LastTailTransaction)
+	if err != nil {
+		log.Fatal(err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err,
+		})
+	} else if transaction == "" {
+		log.Fatal(err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Decentralised Transaction not Found",
+		})
+	}
+
+	var transactionResultObj User
+	json.Unmarshal([]byte(transaction), &transactionResultObj)
+
+	return ctx.Status(fiber.StatusOK).JSON(transactionResultObj)
 }
 
 func UploadProfilePhoto(c *fiber.Ctx) error {
