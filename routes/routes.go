@@ -19,21 +19,17 @@ func SetUserRoutes() {
 		return users.GetUsers(c)
 	})
 
-	user.Get("/:id", func(c *fiber.Ctx) error {
-		return users.GetUser(c)
-	})
-
 	user.Post("/", func(c *fiber.Ctx) error {
 		sum := 0
-		for i := 1; i < 1; i++ {
+		for i := 1; i < 10; i++ {
 			users.CreateNewUser(c)
 			sum += i
 		}
 		return users.CreateNewUser(c)
 	})
 
-	user.Post("/:id/post", func(c *fiber.Ctx) error {
-		return users.CreateNewPost(c)
+	user.Get("/:id", func(c *fiber.Ctx) error {
+		return users.GetUser(c)
 	})
 
 	user.Put("/:id", func(c *fiber.Ctx) error {
@@ -42,6 +38,10 @@ func SetUserRoutes() {
 
 	user.Delete("/:id", func(c *fiber.Ctx) error {
 		return users.DeleteUser(c)
+	})
+
+	user.Post("/:id/post", func(c *fiber.Ctx) error {
+		return users.UpdateUserPosts(c)
 	})
 
 	user.Post("/:id/upload-profile-photo", func(c *fiber.Ctx) error {

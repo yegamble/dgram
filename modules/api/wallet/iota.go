@@ -10,7 +10,6 @@ import (
 	"github.com/iotaledger/iota.go/transaction"
 	"github.com/iotaledger/iota.go/trinary"
 	"github.com/pebbe/zmq4"
-	"log"
 	"math/big"
 	"strings"
 )
@@ -105,17 +104,6 @@ func UpdateProfileAddress(address string, seed string, profile string) (bundle.B
 		},
 	}
 
-	//// create inputs for the transfer
-	//inputs := []api.Input{
-	//	{
-	//		// must be 90 trytes long (inlcude the checksum)
-	//		Address:  trinaryAddress,
-	//		Security: consts.SecurityLevelLow,
-	//		KeyIndex: 0,
-	//		Balance:  0,
-	//	},
-	//}
-
 	// we don't need to set the security level or timestamp in the options because we supply
 	// the input and remainder addresses.
 	prepTransferOpts := api.PrepareTransfersOptions{}
@@ -143,6 +131,9 @@ func UpdateProfileAddress(address string, seed string, profile string) (bundle.B
 
 func GetTransactionJSON(transactionHash string) (string, error) {
 
+	var resultTryte string
+	var resultAscii string
+
 	bundle, err := iotaAPI.GetBundle(transactionHash)
 	if err != nil {
 		return "", err
@@ -151,36 +142,47 @@ func GetTransactionJSON(transactionHash string) (string, error) {
 	bundleHashArray := make([]trinary.Hash, len(bundle))
 	var signatureMessage bytes.Buffer
 
-	for i := range bundle {
-		bundleHashArray = append(bundleHashArray, bundle[i].SignatureMessageFragment)
-		signatureMessage.Write([]byte(bundle[i].SignatureMessageFragment))
-	}
+	if len(bundle) > 1 {
+		for i := range bundle {
+			bundleHashArray = append(bundleHashArray, bundle[i].SignatureMessageFragment)
+			signatureMessage.Write([]byte(bundle[i].SignatureMessageFragment))
+		}
 
-	resultTryte := strings.TrimSpace(strings.Join(bundleHashArray[:], ""))
-	resultAscii, err := converter.TrytesToASCII(resultTryte)
+		resultTryte = strings.TrimSpace(strings.Join(bundleHashArray[:], ""))
+
+		resultAscii, err = converter.TrytesToASCII(resultTryte)
+		if err != nil {
+			return "", err
+		}
+
+	} else {
+
+		txObj, err := iotaAPI.GetTransactionObjects(transactionHash)
+		if err != nil {
+			return "", err
+		}
+
+		resultAscii, err = transaction.ExtractJSON(txObj)
+		if err != nil {
+			return "", err
+		}
+	}
 
 	resultNullRemoved := bytes.Trim([]byte(resultAscii), "\x00")
-
-	if err != nil {
-		return "", err
-	}
-
-	fmt.Println(resultAscii)
 
 	return strings.TrimSpace(string(resultNullRemoved)), nil
 }
 
-func GenerateNewWallet() (string, string, string) {
+func GenerateNewWallet() (string, string, string, error) {
 	newWallet := new(IotaWallet)
 	newWallet.seed, _ = GenerateRandomSeed()
 
 	address, err := GenerateNewAddress(newWallet.seed)
 	if err != nil {
-		log.Fatal(err)
-		return "", "", ""
+		return "", "", "", err
 	}
 
-	return newWallet.seed, address, ""
+	return newWallet.seed, address, "", nil
 }
 
 // i req: addresses, The addresses of which to get the bundles of.
@@ -226,7 +228,6 @@ func GenerateNewAddress(seed string) (string, error) {
 	addr, err := iotaAPI.GetNewAddress(seed, api.GetNewAddressOptions{Index: 0})
 	if err != nil {
 		// handle error
-		log.Fatal(err)
 		return "", err
 	}
 	return addr[0], nil

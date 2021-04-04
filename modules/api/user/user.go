@@ -32,13 +32,15 @@ type User struct {
 	ProfilePhoto        string     `json:"profile_photo" gorm:"type:text"`
 	HeaderPhoto         string     `json:"header_photo" gorm:"type:text"`
 	Password            string     `json:"password" gorm:"type:text"`
-	Posts               []Post     `json:"posts" gorm:"foreignKey:user_id;references:ID"`
+	Posts               *string    `json:"posts" gorm:"type:text"`
 	PrivateKey          string     `json:"private_key" gorm:"type:text"`
 	PublicKey           string     `json:"public_key" gorm:"type:text"`
 	LastTailTransaction string     `json:"last_tail_transaction" gorm:"type:text"`
-	Friends             []User     `json:"friends" gorm:"type:text"`
+	Following           *[]string  `json:"following" gorm:"type:text"`
 	PGPKey              string     `json:"pgp_key" gorm:"type:text"`
-	gorm.Model
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+	DeletedAt           gorm.DeletedAt
 }
 
 type HashConfig struct {
@@ -50,15 +52,6 @@ type HashConfig struct {
 
 func init() {
 
-}
-
-func GetUsers(c *fiber.Ctx) error {
-	db := database.DBConn
-	var users []User
-
-	//db.Preload(clause.Associations).Find(&users) //asociations
-	db.Find(&users)
-	return c.Status(fiber.StatusOK).JSON(&users)
 }
 
 func GetUser(c *fiber.Ctx) error {
@@ -74,10 +67,13 @@ func GetUser(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(user)
 }
 
-func SaveUser(user *User) {
+func GetUsers(c *fiber.Ctx) error {
 	db := database.DBConn
+	var users []User
 
-	db.Save(&user)
+	//db.Preload(clause.Associations).Find(&users) //asociations
+	db.Find(&users)
+	return c.Status(fiber.StatusOK).JSON(&users)
 }
 
 func FindUser(id string) User {
@@ -87,6 +83,100 @@ func FindUser(id string) User {
 	db.First(&user, "id = ?", id)
 
 	return user
+}
+
+func DeleteUser(c *fiber.Ctx) error {
+	db := database.DBConn
+	id := c.Params("id")
+
+	var body User
+	db.First(&body, "id = ?", id)
+	if body.FirstName == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"status":  "false",
+			"message": "Profile Not Found",
+		})
+	}
+
+	db.Delete(&body)
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status":  "true",
+		"message": "Profile Deleted",
+	})
+}
+
+//Function creates a new User
+func CreateNewUser(ctx *fiber.Ctx) error {
+
+	db := database.DBConn
+
+	//var body User
+	var body User
+	var unencryptedPrivateKey string
+
+	body.ID = uuid.New()
+	var walletErrors error
+	body.PrivateKey, body.PublicKey, body.LastTailTransaction, walletErrors = wallet.GenerateNewWallet()
+	if walletErrors != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": walletErrors.Error(),
+		})
+	}
+
+	body.Password = encodeToArgon(body.Password)
+	UploadProfilePhoto(ctx)
+
+	err := ctx.BodyParser(&body)
+	if err != nil || isValidNewUser(&body, true) != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err,
+		})
+	}
+
+	body.Username, _ = generateUsername(*body.FirstName, *body.LastName)
+	body.PGPKey = keyUtil.Fingerprint(body.PGPKey)
+
+	unencryptedPrivateKey = body.PrivateKey
+	body.PrivateKey = encodeToArgon(body.PrivateKey)
+	body.CreatedAt = time.Now().UTC()
+	body.UpdatedAt = time.Now().UTC()
+
+	data, err := json.Marshal(body)
+	_, body.LastTailTransaction, err = wallet.UpdateProfileAddress(body.PublicKey, unencryptedPrivateKey, string(data))
+	if err != nil {
+		log.Println(err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err,
+		})
+	} else {
+		//body.PrivateKey = unencryptedPrivateKey
+		db.Create(&body)
+	}
+
+	transaction, err := wallet.GetTransactionJSON(body.LastTailTransaction)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err,
+		})
+	} else if transaction == "" {
+		log.Println(err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Decentralised Transaction not Found",
+		})
+	}
+
+	var transactionResultObj User
+	json.Unmarshal([]byte(transaction), &transactionResultObj)
+
+	log.Println("Profile created at: " + body.PublicKey)
+	return ctx.Status(fiber.StatusOK).JSON(transactionResultObj)
+}
+
+func SaveUser(user *User) {
+	db := database.DBConn
+
+	db.Save(&user)
 }
 
 func UpdateUser(c *fiber.Ctx) error {
@@ -103,7 +193,7 @@ func UpdateUser(c *fiber.Ctx) error {
 	}
 
 	error := c.BodyParser(&body)
-	if error != nil || isValidUser(&body) != nil || body.ID.String() != id {
+	if error != nil || isValidNewUser(&body, false) != nil || body.ID.String() != id {
 		return FailedTransaction(c)
 	}
 
@@ -121,7 +211,7 @@ func UpdateUser(c *fiber.Ctx) error {
 
 	data, err := json.Marshal(body)
 	_, body.LastTailTransaction, err = wallet.UpdateProfileAddress(body.PublicKey, body.PrivateKey, string(data))
-	if err != nil || isValidUser(&body) != nil {
+	if err != nil || isValidNewUser(&body, false) != nil {
 		log.Fatal(err)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err,
@@ -168,77 +258,6 @@ func userFormMapper(user *User, c *fiber.Ctx) error {
 	return nil
 }
 
-func DeleteUser(c *fiber.Ctx) error {
-	db := database.DBConn
-	id := c.Params("id")
-
-	var body User
-	db.First(&body, "id = ?", id)
-	if body.FirstName == nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"status":  "false",
-			"message": "Profile Not Found",
-		})
-	}
-
-	db.Delete(&body)
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"status":  "true",
-		"message": "Profile Deleted",
-	})
-}
-
-//Function creates a new User
-func CreateNewUser(ctx *fiber.Ctx) error {
-
-	db := database.DBConn
-
-	//var body User
-	var body User
-	body.ID = uuid.New()
-	body.PrivateKey, body.PublicKey, body.LastTailTransaction = wallet.GenerateNewWallet()
-	body.Password = encodeToArgon(body.Password)
-	UploadProfilePhoto(ctx)
-
-	err := ctx.BodyParser(&body)
-	if err != nil || isValidUser(&body) != nil {
-		return FailedTransaction(ctx)
-	}
-
-	body.Username, _ = generateUsername(*body.FirstName, *body.LastName)
-	body.PGPKey = keyUtil.Fingerprint(body.PGPKey)
-
-	data, err := json.Marshal(body)
-	_, body.LastTailTransaction, err = wallet.UpdateProfileAddress(body.PublicKey, body.PrivateKey, string(data))
-	if err != nil {
-		log.Fatal(err)
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err,
-		})
-	} else {
-		db.Create(&body)
-	}
-
-	transaction, err := wallet.GetTransactionJSON(body.LastTailTransaction)
-	if err != nil {
-		log.Fatal(err)
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err,
-		})
-	} else if transaction == "" {
-		log.Fatal(err)
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Decentralised Transaction not Found",
-		})
-	}
-
-	var transactionResultObj User
-	json.Unmarshal([]byte(transaction), &transactionResultObj)
-
-	return ctx.Status(fiber.StatusOK).JSON(transactionResultObj)
-}
-
 func UploadProfilePhoto(c *fiber.Ctx) error {
 	// Get first file from form field "profile_photo":
 	file, err := c.FormFile("profile_photo")
@@ -270,6 +289,19 @@ func UploadProfilePhoto(c *fiber.Ctx) error {
 	} else {
 		return err
 	}
+}
+
+func UpdateUserPosts(c *fiber.Ctx) error {
+
+	db := database.DBConn
+	id := c.Params("id")
+
+	var body User
+	db.First(&body, "id = ?", id)
+
+	CreateNewPost(c)
+
+	return nil
 }
 
 func generateUsername(FirstName string, LastName string) (string, error) {
@@ -324,10 +356,23 @@ func encodeToArgon(input string) string {
 }
 
 //checks if user is valid before saving to database
-func isValidUser(user *User) error {
+func isValidNewUser(user *User, newUser bool) error {
 	if user.FirstName == nil || user.LastName == nil {
 		return errors.New("empty name")
 	}
+
+	if user.Email == nil {
+		return errors.New("empty email")
+	}
+
+	if user.Posts != nil && newUser {
+		*user.Posts = ""
+	}
+
+	if user.Following != nil && newUser {
+		*user.Following = nil
+	}
+
 	return nil
 }
 
